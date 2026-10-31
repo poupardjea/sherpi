@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Affiche vitrine avec QR code</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#24533F}a:hover{color:#163a2b}
+</style>
+</helmet>
+<div style="width: 560px; height: 794px; box-sizing: border-box; padding: 48px; background: #24533F; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #F2E8D5">La Cave de Marthe · Noël</div>
+
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 60px; line-height: 0.98; letter-spacing: -1.8px">Pas d'idée de cadeau ?</h1>
+
+<p style="margin: 0; font-size: 19px; line-height: 1.5; color: #E3EDE7">Scannez, décrivez la personne : Marthe vous propose trois bouteilles de la cave. Il ne reste qu'à les prendre au comptoir.</p>
+
+<div style="display: flex; align-items: center; gap: 24px; margin-top: auto">
+<div style="width: 200px; height: 200px; flex-shrink: 0; border-radius: 20px; background: #FFFFFF; color: #1C1B19; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-align: center">[QR CODE]</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15">Même quand la boutique est pleine.</div>
+<div style="font-size: 15px; line-height: 1.45; color: #D6E4DC">Ou sur [ADRESSE DU SITE]</div>
+</div>
+</div>
+
+<div style="font-size: 12px; line-height: 1.4; color: #D6E4DC">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":560,"height":794}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

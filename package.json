@@ -1,0 +1,29 @@
+{
+  "name": "conseiller-cadeau",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w apps/widget && concurrently -n widget,api -c magenta,cyan \"npm run dev -w apps/widget\" \"npm run dev -w apps/api\"",
+    "build": "npm run build -w apps/widget",
+    "start": "npm run start -w apps/api",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc -p packages/shared && tsc -p apps/api && tsc -p apps/widget"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
+  }
+}

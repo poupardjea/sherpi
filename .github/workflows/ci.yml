@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Taille du widget (< 60 Ko gzip)
+        run: |
+          size=$(gzip -c apps/widget/dist/w.js | wc -c)
+          echo "w.js gzip : $size octets"
+          test "$size" -lt 61440

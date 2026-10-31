@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Espace commerçant du conseiller</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#24533F}a:hover{color:#163a2b}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; box-sizing: border-box; display: flex; background: #F5F3EF; font-family: Inter, system-ui, sans-serif; color: #1C1B19">
+
+<nav aria-label="Menu" style="width: 232px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; background: #FFFFFF; border-right: 1px solid #E7E3DC; display: flex; flex-direction: column; gap: 4px">
+<div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 19px; padding: 0 12px 20px">La Cave de Marthe</div>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; background: #E6EFEA; color: #163a2b; text-decoration: none; font-weight: 600; font-size: 14.5px">Aujourd'hui</a>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; color: #1C1B19; text-decoration: none; font-size: 14.5px">Mises de côté</a>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; color: #1C1B19; text-decoration: none; font-size: 14.5px">Ma sélection</a>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; color: #1C1B19; text-decoration: none; font-size: 14.5px">Mes coups de cœur</a>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; color: #1C1B19; text-decoration: none; font-size: 14.5px">Ce que cherchent les clients</a>
+<a href="#" style="display: flex; align-items: center; height: 44px; padding: 0 12px; border-radius: 12px; color: #1C1B19; text-decoration: none; font-size: 14.5px">Installer sur mon site</a>
+<div style="margin-top: auto; padding: 12px; border-radius: 12px; background: #F5F3EF; font-size: 12.5px; line-height: 1.45; color: #5C5852">Pack Noël actif jusqu'au 31 janvier</div>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: #5C5852">Samedi 20 décembre · données d'exemple</div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -0.6px">Bonjour Marthe</h1>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; background: #1C1B19; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 14px">Imprimer l'affiche QR</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: #5C5852">Demandes cette semaine</div>
+<div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 32px">[N]</div>
+</div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: #5C5852">Mises de côté</div>
+<div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 32px">[N]</div>
+</div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 13px; color: #5C5852">Retirées en boutique</div>
+<div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 32px">[N]</div>
+</div>
+</div>
+
+<div style="display: flex; gap: 16px; flex: 1; min-height: 0">
+<section style="flex: 3; min-width: 0; background: #FFFFFF; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">À préparer aujourd'hui</h2>
+<table style="width: 100%; border-collapse: collapse; font-size: 14px">
+<thead>
+<tr style="text-align: left; color: #5C5852; font-size: 12.5px">
+<th style="padding: 8px 6px; font-weight: 500">N°</th>
+<th style="padding: 8px 6px; font-weight: 500">Client</th>
+<th style="padding: 8px 6px; font-weight: 500">Bouteille</th>
+<th style="padding: 8px 6px; font-weight: 500">Retrait</th>
+<th style="padding: 8px 6px; font-weight: 500"></th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-top: 1px solid #E7E3DC">
+<td style="padding: 10px 6px; font-weight: 600">M-0427</td>
+<td style="padding: 10px 6px">Paul D.</td>
+<td style="padding: 10px 6px">Les Grès Rouges 2021 · cadeau</td>
+<td style="padding: 10px 6px">avant 19 h</td>
+<td style="padding: 10px 6px; text-align: right"><button style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #24533F; background: #FFFFFF; color: #24533F; font: 600 13px Inter, sans-serif">Prêt</button></td>
+</tr>
+<tr style="border-top: 1px solid #E7E3DC">
+<td style="padding: 10px 6px; font-weight: 600">M-0426</td>
+<td style="padding: 10px 6px">Claire B.</td>
+<td style="padding: 10px 6px">Champagne [CUVÉE] · ×2</td>
+<td style="padding: 10px 6px">11 h</td>
+<td style="padding: 10px 6px; text-align: right"><button style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #24533F; background: #FFFFFF; color: #24533F; font: 600 13px Inter, sans-serif">Prêt</button></td>
+</tr>
+<tr style="border-top: 1px solid #E7E3DC">
+<td style="padding: 10px 6px; font-weight: 600">M-0425</td>
+<td style="padding: 10px 6px">Hugo L.</td>
+<td style="padding: 10px 6px">Coffret découverte Loire</td>
+<td style="padding: 10px 6px">14 h</td>
+<td style="padding: 10px 6px; text-align: right; font-size: 13px; color: #24533F; font-weight: 600">Préparé</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section style="flex: 2; min-width: 0; background: #FFFFFF; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Ce que vos clients cherchent</h2>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>Rouge puissant pour un homme, 20–40 €</span><span style="color: #5C5852">fréquent</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>Champagne pour dire merci</span><span style="color: #5C5852">fréquent</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>Vin nature autour de 20 €</span><span style="color: #8E2C3A; font-weight: 600">peu en stock</span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>Whisky tourbé, moins de 60 €</span><span style="color: #8E2C3A; font-weight: 600">absent du stock</span></li>
+</ul>
+<div style="margin-top: auto; padding: 12px; border-radius: 12px; background: #F5F3EF; font-size: 13px; line-height: 1.45; color: #1C1B19">Idée : 3 demandes de whisky tourbé sans réponse cette semaine.</div>
+</section>
+</div>
+
+<section style="background: #FFFFFF; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Ma sélection de Noël</h2>
+<a href="#" style="font-size: 14px; font-weight: 600">Ajouter une bouteille</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid #E7E3DC">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Les Grès Rouges 2021</span><span style="font-size: 12.5px; color: #5C5852">24 € · coup de cœur</span></div>
+<label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #24533F; font-weight: 600"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #24533F">Dispo</label>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid #E7E3DC">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Combe Noire 2020</span><span style="font-size: 12.5px; color: #5C5852">29 €</span></div>
+<label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #24533F; font-weight: 600"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #24533F">Dispo</label>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid #E7E3DC; background: #FAF9F7">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #5C5852">Clos des Aubes 2019</span><span style="font-size: 12.5px; color: #6B665F">38 € · plus proposé</span></div>
+<label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #5C5852; font-weight: 600"><input type="checkbox" style="width: 20px; height: 20px; accent-color: #24533F">Dispo</label>
+</div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
