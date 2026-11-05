@@ -12,7 +12,8 @@ export const CSS = `
   --line:#E7E3DC;--line-strong:#CFC9BF;--cream:#F2E8D5;
   --title:'Bricolage Grotesque',system-ui,sans-serif;--body:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
 }
-:host([mode="page"]){display:block;min-height:100vh;min-height:100dvh}
+/* --cc-min-height : hauteur imposée par la page qui intègre le widget (cadre de démo). */
+:host([mode="page"]){display:block;min-height:100vh;min-height:var(--cc-min-height,100dvh)}
 *,*::before,*::after{box-sizing:border-box}
 /* Un « * { … !important } » du site atteint l'hôte lui-même : on refixe tout ce qui s'hérite. */
 .root{font-family:var(--body);font-size:14.5px;font-weight:400;font-style:normal;line-height:1.45;color:var(--text);-webkit-font-smoothing:antialiased;text-align:left;
@@ -29,7 +30,7 @@ h1,h2,p{margin:0}
 .launcher:focus-visible{outline-color:var(--text)}
 .backdrop{position:fixed;inset:0;z-index:2147483000;background:rgba(28,27,25,.18)}
 .panel{position:fixed;right:32px;bottom:32px;z-index:2147483001;width:400px;height:min(680px,calc(100vh - 64px));border-radius:24px;background:var(--bg);box-shadow:0 24px 64px rgba(28,27,25,.22);display:flex;flex-direction:column;overflow:hidden}
-.page{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg);max-width:560px;margin:0 auto}
+.page{min-height:100vh;min-height:var(--cc-min-height,100dvh);display:flex;flex-direction:column;background:var(--bg);max-width:560px;margin:0 auto}
 .page.is-surface,.panel .body.is-surface{background:var(--surface)}
 @media (max-width:480px){.panel{inset:0;width:auto;height:auto;border-radius:0}.launcher{right:16px;bottom:16px}}
 

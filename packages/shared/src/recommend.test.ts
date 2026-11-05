@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import catalogue from "../../../data/catalogue-demo.json" with { type: "json" };
-import { priceRangeFromText } from "./budget.ts";
+import catalogue from "../../../data/demos/cave-de-marthe.json" with { type: "json" };
+import epicerie from "../../../data/demos/epicerie-de-lucien.json" with { type: "json" };
+import librairie from "../../../data/demos/les-mots-passants.json" with { type: "json" };
+import { formatPrice, priceRangeFromText } from "./budget.ts";
 import { filterCandidates, finalizePicks, rankCandidates, resolvePriceRange } from "./recommend.ts";
+import { ofName } from "./text.ts";
 import type { Product } from "./types.ts";
 
 const products = catalogue.products as Product[];
@@ -33,7 +36,7 @@ describe("filtrage serveur", () => {
   it("filtre strict par catégorie (« En coffret »)", () => {
     const picks = recommend({ category: "coffret" });
     expect(picks.length).toBeGreaterThan(0);
-    for (const p of picks) expect(p.color).toBe("coffret");
+    for (const p of picks) expect(p.category).toBe("coffret");
   });
 });
 
@@ -79,7 +82,7 @@ describe("classement de repli", () => {
       rankCandidates(filterCandidates(products, input), { ...input, lighter }).findIndex((p) => p.id === "p04");
     // Terre de Schiste (p04, puissant) recule quand on demande plus léger.
     expect(heavyRank(true)).toBeGreaterThan(heavyRank(false));
-    for (const p of recommend({ ...input, lighter: true })) expect(p.style).not.toContain("puissant");
+    for (const p of recommend({ ...input, lighter: true })) expect(p.tags).not.toContain("puissant");
   });
 });
 
@@ -110,5 +113,46 @@ describe("budget en texte libre", () => {
     expect(resolvePriceRange({ budget: "40-80", text: "moins de 30 €" })).toEqual({ min: 40.01, max: 80 });
     // « Élargir » envoie un plafond explicite qui remplace celui du texte.
     expect(resolvePriceRange({ max_price: 45, text: "30 € max" })).toEqual({ min: 0, max: 45 });
+  });
+});
+
+describe("autres métiers", () => {
+  const rank = (items: Product[], input: Parameters<typeof filterCandidates>[1], vertical: "epicerie" | "librairie") =>
+    finalizePicks([], rankCandidates(filterCandidates(items, input), input, vertical));
+
+  it("épicerie : « elle adore le chocolat » met du chocolat en tête", () => {
+    const picks = rank(epicerie.products as Product[], { text: "Pour ma sœur, elle adore le chocolat, 30 € max" }, "epicerie");
+    expect(picks).toHaveLength(3);
+    for (const p of picks) expect(p.price).toBeLessThanOrEqual(30);
+    expect(picks[0]?.tags).toContain("chocolat");
+  });
+
+  it("librairie : « il aime la BD » propose des BD (mot de 2 lettres compris)", () => {
+    const picks = rank(librairie.products as Product[], { text: "Pour mon neveu, il aime la BD", budget: "lt20" }, "librairie");
+    expect(picks[0]?.category).toBe("bd");
+  });
+
+  it("librairie : « Plus léger » fait reculer les livres sombres", () => {
+    const books = librairie.products as Product[];
+    const input = { budget: "lt20" as const, text: "un polar" };
+    const darkRank = (lighter: boolean) =>
+      rankCandidates(filterCandidates(books, input), { ...input, lighter }, "librairie").findIndex((p) => p.id === "b08");
+    expect(darkRank(true)).toBeGreaterThan(darkRank(false));
+  });
+});
+
+describe("affichage des prix", () => {
+  it("à la française, sans décimales inutiles", () => {
+    expect(formatPrice(24)).toBe("24\u00a0€");
+    expect(formatPrice(15.95)).toBe("15,95\u00a0€");
+    expect(formatPrice(8.5)).toBe("8,50\u00a0€");
+  });
+});
+
+describe("prénoms", () => {
+  it("élide « de » devant une voyelle", () => {
+    expect(ofName("Marthe")).toBe("de Marthe");
+    expect(ofName("Inès")).toBe("d'Inès");
+    expect(ofName("Émile")).toBe("d'Émile");
   });
 });

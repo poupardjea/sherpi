@@ -6,8 +6,9 @@ Spec : [SPEC.md](SPEC.md). Maquettes : [design/](design/). Le nom du produit et 
 
 | Dossier | Rôle |
 | --- | --- |
-| `packages/shared` | Types, budgets, filtrage serveur, classement de repli, validation des ids (règles 1 à 3), jours de retrait |
-| `apps/api` | API Hono : config, recommandation, mises de côté, annulation, `.ics`, page QR, site de démo ; sert aussi `w.js` |
+| `packages/shared` | Types, budgets, filtrage serveur, classement de repli, validation des ids (règles 1 à 3), jours de retrait, réglages par métier ([verticals.ts](packages/shared/src/verticals.ts)) |
+| `apps/api` | API Hono : config, recommandation, mises de côté, annulation, `.ics`, page QR, page d'accueil, faux sites de démo ; sert aussi `w.js` |
+| `data/demos` | Les 3 boutiques de démo (caviste, épicerie fine, librairie), 30 produits fictifs chacune |
 | `apps/api/migrations` | Schéma PostgreSQL (appliqué automatiquement au démarrage) |
 | `apps/widget` | Web component (Shadow DOM, sans framework) compilé en un seul `w.js` |
 
@@ -18,7 +19,25 @@ npm install
 npm run dev
 ```
 
-Puis http://localhost:8787 (site de démo avec la bulle) et http://localhost:8787/cave-de-marthe (page QR).
+Puis :
+
+- http://localhost:8787 : page d'accueil avec les 3 démos (onglets Caviste, Épicerie fine, Librairie) ;
+- http://localhost:8787/demo/cave-de-marthe : faux site de commerçant avec la bulle (idem `/demo/epicerie-de-lucien`, `/demo/les-mots-passants`) ;
+- http://localhost:8787/cave-de-marthe : page QR.
+
+## Métiers
+
+Chaque boutique a un métier (`shops.vertical`) : `caviste`, `epicerie` ou `librairie`. Le métier règle les textes du widget (« dans notre cave »), les choix « pour qui » et « occasion », les raccourcis de la page QR, les puces sous les résultats, les icônes, et les synonymes du classement simple. Ajouter un métier = une entrée dans [verticals.ts](packages/shared/src/verticals.ts).
+
+Les fiches produit sont neutres : `origin` (appellation, producteur, auteur), `category`, `details` (cépages, ingrédients, genre), `tags` (style, pour le classement), `unit` (« bouteille », « pot », « livre »).
+
+## À compléter avant la mise en ligne
+
+| Quoi | Où |
+| --- | --- |
+| Nom du produit et e-mail de contact | [brand.ts](packages/shared/src/brand.ts) |
+| Tarif affiché | `PRICING` dans [landing.ts](apps/api/src/landing.ts) |
+| Mentions légales (éditeur, SIRET, hébergeur) | `legalPage` dans [landing.ts](apps/api/src/landing.ts) |
 
 Sans `.env`, les données sont en mémoire et la recommandation utilise le classement simple. Variables : voir [.env.example](.env.example).
 
@@ -72,7 +91,7 @@ Variables de l'appli (avec Compose, elles sont dérivées de `deploy/.env`) :
 | `DATABASE_URL` | URL du PostgreSQL managé (TLS par défaut) |
 | `PUBLIC_URL` | `https://<domaine>` (liens d'annulation et `.ics`) |
 | `ANTHROPIC_API_KEY` | Clé Claude (sans clé : classement simple) |
-| `SEED_DEMO` | `1` pour la démo publique : la cave de Marthe est rechargée à chaque démarrage |
+| `SEED_DEMO` | `1` pour la démo publique : les 3 boutiques de démo sont rechargées à chaque démarrage |
 | `PORT` | Fourni par l'hébergeur (8787 par défaut) |
 
 Charger la démo à la main dans une base : `DATABASE_URL=… npm run db:seed -w apps/api`.

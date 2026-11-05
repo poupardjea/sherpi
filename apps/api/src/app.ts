@@ -12,6 +12,7 @@ import {
   pickupDays,
   rankCandidates,
   resolvePriceRange,
+  verticalOf,
   widerBudget,
   type Product,
   type PublicReservation,
@@ -25,6 +26,7 @@ import { cors } from "hono/cors";
 import { z } from "zod";
 import type { ModelPicker } from "./claude.ts";
 import { reservationIcs } from "./ics.ts";
+import { landingPage, legalPage } from "./landing.ts";
 import { cancelPage, demoSite, hostedPage, notFoundPage } from "./pages.ts";
 import { rateLimit } from "./rate-limit.ts";
 import type { Reservation, Store } from "./store.ts";
@@ -40,6 +42,8 @@ export interface AppDeps {
   widgetPath: string;
   /** URL publique (liens d'annulation, .ics). Par défaut : l'origine de la requête. */
   publicUrl?: string;
+  /** Boutiques présentées sur la page d'accueil, dans l'ordre des onglets. */
+  demoSlugs: string[];
   now?: () => Date;
 }
 
@@ -75,8 +79,8 @@ function sameToken(a: string, b: string): boolean {
 }
 
 function toRecommendation(p: Product) {
-  const { id, name, appellation, grapes, color, price, stock, merchant_note } = p;
-  return { id, name, appellation, grapes, color, price, stock, merchant_note };
+  const { id, name, origin, details, category, unit, price, stock, merchant_note } = p;
+  return { id, name, origin, details, category, unit, price, stock, merchant_note };
 }
 
 export function createApp(deps: AppDeps) {
@@ -128,6 +132,7 @@ export function createApp(deps: AppDeps) {
       accent_secondary: shop.accent_secondary,
       sells_alcohol: shop.sells_alcohol,
       product_name: BRAND.productName,
+      copy: verticalOf(shop.vertical).copy,
       closes_today: closesToday(shop.opening, now()),
       pickup_days: pickupDays(shop.opening, 6, now()),
     };
@@ -143,7 +148,7 @@ export function createApp(deps: AppDeps) {
 
     // Règles 2 et 3 : dispo et budget filtrés ici, avant le modèle.
     const candidates = filterCandidates(await store.listProducts(shop.slug), input);
-    const ranked = rankCandidates(candidates, input);
+    const ranked = rankCandidates(candidates, input, shop.vertical);
 
     let modelIds: string[] = [];
     let source: RecommendResponse["source"] = "fallback";
@@ -253,7 +258,13 @@ export function createApp(deps: AppDeps) {
     });
   });
 
-  app.get("/", (c) => c.redirect("/demo/cave-de-marthe"));
+  // Page d'accueil : présentation et une démo par métier.
+  app.get("/", async (c) => {
+    const shops = await Promise.all(deps.demoSlugs.map((slug) => store.getShop(slug)));
+    return c.html(landingPage(shops.filter((s) => s !== null)));
+  });
+
+  app.get("/mentions-legales", (c) => c.html(legalPage()));
 
   app.get("/demo/:slug", async (c) => {
     const shop = await store.getShop(c.req.param("slug"));

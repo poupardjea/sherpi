@@ -4,7 +4,7 @@ import { createApp, type AppDeps } from "./app.ts";
 import type { ModelPicker } from "./claude.ts";
 import { migrate, type Db } from "./db.ts";
 import { PgStore } from "./pg-store.ts";
-import { createDemoStore, seedDemo } from "./seed.ts";
+import { DEMOS, createDemoStore, seedDemo } from "./seed.ts";
 import type { Store } from "./store.ts";
 import { createPgliteDb } from "./testing/pglite.ts";
 
@@ -32,12 +32,13 @@ const STORES: [string, (shop?: Partial<Shop>) => Promise<Store>][] = [
 ];
 
 const SHOP = "/shops/cave-de-marthe";
+const DEMO_SLUGS = DEMOS.map((d) => d.shop.slug);
 
 describe.each(STORES)("store %s", (_name, makeStore) => {
   async function setup(overrides: Partial<AppDeps> = {}, shop?: Partial<Shop>) {
     const store = await makeStore(shop);
     const notify = vi.fn(async () => {});
-    const app = createApp({ store, notify, widgetPath: "missing.js", now: () => NOW, ...overrides });
+    const app = createApp({ store, notify, widgetPath: "missing.js", demoSlugs: DEMO_SLUGS, now: () => NOW, ...overrides });
     const post = (path: string, body: unknown) =>
       app.request(path, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
     return { app, store, notify, post };
@@ -145,6 +146,34 @@ describe.each(STORES)("store %s", (_name, makeStore) => {
     });
   });
 
+  describe("démos par métier", () => {
+    it.each(DEMO_SLUGS)("%s : config du métier, 3 suggestions et chaque raccourci de la page QR trouve un produit", async (slug) => {
+      const { app, post } = await setup();
+      const config = (await (await app.request(`/shops/${slug}/config`)).json()) as PublicShopConfig;
+      expect(config.copy.recipients.length).toBeGreaterThan(0);
+      const body = (await (await post(`/shops/${slug}/recommend`, { text: config.copy.example })).json()) as RecommendResponse;
+      expect(body.products).toHaveLength(3);
+      for (const idea of config.copy.ideas) {
+        const r = (await (await post(`/shops/${slug}/recommend`, idea.query)).json()) as RecommendResponse;
+        expect(r.products.length, idea.label).toBeGreaterThan(0);
+      }
+      const chip = config.copy.category_chip;
+      if (chip) {
+        const r = (await (await post(`/shops/${slug}/recommend`, { category: chip.category })).json()) as RecommendResponse;
+        expect(r.products.length, chip.label).toBeGreaterThan(0);
+      }
+    });
+
+    it("page d'accueil : un onglet et une démo par métier", async () => {
+      const { app } = await setup();
+      const html = await (await app.request("/")).text();
+      for (const slug of DEMO_SLUGS) expect(html).toContain(`shop="${slug}"`);
+      expect(html).toContain("Épicerie fine");
+      expect((await app.request("/mentions-legales")).status).toBe(200);
+      expect((await app.request("/demo/les-mots-passants")).status).toBe(200);
+    });
+  });
+
   describe("mise de côté", () => {
     async function reserve(ctx: Awaited<ReturnType<typeof setup>>, extra: object = {}) {
       const config = (await (await ctx.app.request(`${SHOP}/config`)).json()) as PublicShopConfig;
@@ -216,14 +245,16 @@ describe("migrations et seed", () => {
   it("sont rejouables sans effet de bord", async () => {
     const db = await createPgliteDb();
     openDbs.push(db);
-    expect(await migrate(db)).toEqual(["001_init.sql", "002_ai_quota.sql"]);
+    expect(await migrate(db)).toEqual(["001_init.sql", "002_ai_quota.sql", "003_verticals.sql"]);
     expect(await migrate(db)).toEqual([]);
     const store = new PgStore(db);
     await seedDemo(store);
     await seedDemo(store);
     const products = await store.listProducts("cave-de-marthe");
     expect(products).toHaveLength(30);
-    expect(products[0]).toMatchObject({ id: "p01", price: 24, grapes: ["syrah", "grenache"], available: true });
+    expect(products[0]).toMatchObject({ id: "p01", price: 24, details: ["syrah", "grenache"], unit: "bouteille", available: true });
+    expect((await store.getShop("les-mots-passants"))?.vertical).toBe("librairie");
+    expect(await store.listProducts("epicerie-de-lucien")).toHaveLength(30);
     expect((await store.getShop("cave-de-marthe"))?.opening[2]).toEqual({ open: "10:00", close: "20:00" });
   });
 });

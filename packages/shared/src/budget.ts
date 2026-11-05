@@ -60,3 +60,9 @@ export function priceRangeFromText(text: string): { min?: number; max?: number }
   const max = between ? Number(between[2]!.replace(",", ".")) : firstNumber(t, MAX);
   return min == null && max == null ? null : { min, max };
 }
+
+/** 24 → « 24 € », 15.95 → « 15,95 € ». */
+export function formatPrice(n: number): string {
+  const digits = Number.isInteger(n) ? 0 : 2;
+  return `${n.toLocaleString("fr-FR", { minimumFractionDigits: digits, maximumFractionDigits: digits })}\u00a0€`;
+}

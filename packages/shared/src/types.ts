@@ -1,17 +1,25 @@
+import type { ShopCopy, VerticalId } from "./verticals.ts";
+
 export interface Product {
   id: string;
   name: string;
-  appellation: string;
-  /** Catégorie : rouge, blanc, rosé, effervescent, spiritueux, coffret, sans alcool… */
-  color: string;
-  grapes: string[];
-  style: string[];
+  /** Ligne sous le nom : appellation, producteur, auteur… */
+  origin: string;
+  /** Catégorie, filtre strict : rouge, coffret, sucré, roman, jeunesse… */
+  category: string;
+  /** Précisions affichées après l'origine : cépages, ingrédients, genre, âge… */
+  details: string[];
+  /** Mots-clés de style ou de goût, pour le classement (non affichés) : puissant, gourmand, drôle… */
+  tags: string[];
+  /** « bouteille », « pot », « livre » : « 1 bouteille » sur la confirmation. */
+  unit: string;
   price: number;
   /** Stock indicatif, saisi par le commerçant. */
   stock: number;
   /** Case « Dispo » du back-office. */
   available: boolean;
   favorite: boolean;
+  /** Accords, publics ou usages : gibier, apéritif, ado… */
   pairings: string[];
   /** « Le mot du commerçant », affiché tel quel au client. */
   merchant_note: string;
@@ -23,6 +31,7 @@ export type OpeningHours = Partial<Record<number, { open: string; close: string 
 export interface Shop {
   slug: string;
   name: string;
+  vertical: VerticalId;
   merchant_first_name: string;
   address: string;
   opening_hours: string;
@@ -49,6 +58,8 @@ export interface PublicShopConfig {
   accent_secondary: string;
   sells_alcohol: boolean;
   product_name: string;
+  /** Textes et raccourcis du métier. */
+  copy: ShopCopy;
   closes_today: string | null;
   pickup_days: PickupDay[];
 }
@@ -71,19 +82,20 @@ export interface RecommendInput {
   /** Plafond explicite (raccourcis de la page hébergée). Ignoré si `budget` est fourni. */
   max_price?: number;
   text?: string;
-  /** Filtre strict sur la catégorie (`color`), ex. "coffret". */
+  /** Filtre strict sur la catégorie, ex. "coffret". */
   category?: string;
   favorites_only?: boolean;
-  /** Puce « Plus léger » : préférence, pas un filtre. */
+  /** Puce de préférence du métier (« Plus léger », « Plutôt sucré ») : préférence, pas un filtre. */
   lighter?: boolean;
 }
 
 export interface Recommendation {
   id: string;
   name: string;
-  appellation: string;
-  grapes: string[];
-  color: string;
+  origin: string;
+  details: string[];
+  category: string;
+  unit: string;
   price: number;
   stock: number;
   merchant_note: string;

@@ -1,5 +1,8 @@
 import {
   BUDGETS,
+  formatPrice,
+  ofName,
+  type IconName,
   type PublicReservation,
   type PublicShopConfig,
   type Recommendation,
@@ -11,8 +14,6 @@ import { append, h, icon } from "./dom.ts";
 import { ICONS } from "./icons.ts";
 import { CSS } from "./styles.ts";
 
-const RECIPIENTS = ["Mon beau-père", "Ma mère", "Un ami", "Un collègue", "Pour moi"];
-const OCCASIONS = ["Noël", "Anniversaire", "Dîner chez des amis", "Merci"];
 const EVIN = "L'abus d'alcool est dangereux pour la santé, à consommer avec modération.";
 
 type View = "form" | "loading" | "results" | "reserve" | "confirm" | "error";
@@ -38,8 +39,7 @@ function shortRecipient(r: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function capitalizeList(items: string[]): string {
-  const s = items.join(", ");
+function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
@@ -107,7 +107,7 @@ export class GiftAdvisor extends HTMLElement {
       this.results = await this.api.recommend(this.query);
       this.setView("results");
     } catch {
-      this.error = { message: "Je n'arrive pas à joindre la cave pour l'instant. Réessayez dans un instant." };
+      this.error = { message: `Je n'arrive pas à joindre ${this.config?.copy.place ?? "la boutique"} pour l'instant. Réessayez dans un instant.` };
       this.setView("error");
     }
   }
@@ -203,8 +203,8 @@ export class GiftAdvisor extends HTMLElement {
       h(
         "div",
         { class: "head-text" },
-        h("h2", { class: "head-title", id: "panel-title", tabindex: "-1", "data-focus": "panel-title" }, `Le conseiller de ${c.merchant_first_name}`),
-        h("div", { class: "head-sub" }, onForm ? "Idées cadeaux dans notre cave" : this.summary()),
+        h("h2", { class: "head-title", id: "panel-title", tabindex: "-1", "data-focus": "panel-title" }, `Le conseiller ${ofName(c.merchant_first_name)}`),
+        h("div", { class: "head-sub" }, onForm ? `Idées cadeaux dans ${c.copy.our_place}` : this.summary()),
       ),
       h("button", { class: "icon-btn", "aria-label": "Fermer le conseiller", onclick: () => this.toggle(false) }, icon(ICONS.close)),
     );
@@ -241,7 +241,7 @@ export class GiftAdvisor extends HTMLElement {
           h(
             "p",
             {},
-            "Décrivez la personne. Je vous propose trois idées de la cave, et vous venez les chercher au comptoir.",
+            `Décrivez la personne. Je vous propose trois idées de ${c.copy.place}, et vous venez les chercher au comptoir.`,
           ),
         ),
         h("div", { class: "page-body" }, ...this.renderPageForm()),
@@ -260,7 +260,7 @@ export class GiftAdvisor extends HTMLElement {
             h(
               "div",
               { class: "head-text" },
-              h("div", { class: "head-title" }, `Le conseiller de ${c.merchant_first_name}`),
+              h("div", { class: "head-title" }, `Le conseiller ${ofName(c.merchant_first_name)}`),
               h("div", { class: "head-sub" }, this.summary()),
             ),
           ),
@@ -281,8 +281,10 @@ export class GiftAdvisor extends HTMLElement {
 
   private summary(): string {
     const q = this.query;
+    const chip = this.config?.copy.category_chip;
+    const category = q.category && (q.category === chip?.category ? chip.label : capitalize(q.category));
     const budget = BUDGETS.find((b) => b.id === q.budget)?.short ?? (q.max_price ? `${q.max_price} € max` : null);
-    const parts = [q.recipient && shortRecipient(q.recipient), q.occasion, q.category === "coffret" && "En coffret", budget];
+    const parts = [q.recipient && shortRecipient(q.recipient), q.occasion, category, budget];
     return parts.filter(Boolean).join(" · ") || "Vos idées cadeaux";
   }
 
@@ -291,7 +293,7 @@ export class GiftAdvisor extends HTMLElement {
       case "form":
         return this.renderBubbleForm();
       case "loading":
-        return [this.userBubble(), h("div", { class: "bubble dots", role: "status" }, "Je regarde dans la cave")].filter(
+        return [this.userBubble(), h("div", { class: "bubble dots", role: "status" }, `Je regarde dans ${this.config!.copy.place}`)].filter(
           Boolean,
         ) as Node[];
       case "results":
@@ -314,6 +316,7 @@ export class GiftAdvisor extends HTMLElement {
 
   // Écran 1 : pour qui / occasion / budget (widget).
   private renderBubbleForm(): Node[] {
+    const { recipients, occasions } = this.config!.copy;
     const choice = (label: string, options: string[], key: "recipient" | "occasion") =>
       h(
         "div",
@@ -346,8 +349,8 @@ export class GiftAdvisor extends HTMLElement {
         { class: "bubble" },
         `Bonjour ! Dites-moi pour qui, et je vous propose trois idées que j'aime, en stock aujourd'hui.`,
       ),
-      choice("C'est pour qui ?", RECIPIENTS, "recipient"),
-      choice("L'occasion", OCCASIONS, "occasion"),
+      choice("C'est pour qui ?", recipients, "recipient"),
+      choice("L'occasion", occasions, "occasion"),
       h(
         "div",
         { class: "group", role: "group", "aria-label": "Budget" },
@@ -402,7 +405,7 @@ export class GiftAdvisor extends HTMLElement {
     const textarea = h("textarea", {
       id: "demande",
       maxlength: "500",
-      placeholder: "Pour mon beau-père, il aime les rouges puissants, 30 € max",
+      placeholder: c.copy.example,
       oninput: (e) => (this.query.text = (e.target as HTMLTextAreaElement).value),
     }) as HTMLTextAreaElement;
     textarea.value = this.query.text ?? "";
@@ -427,9 +430,8 @@ export class GiftAdvisor extends HTMLElement {
         "div",
         { class: "group" },
         h("div", { class: "label" }, "Ou partez d'une idée"),
-        idea(ICONS.gift, "Un coffret à offrir, moins de 40 €", { category: "coffret", max_price: 40 }),
-        idea(ICONS.glass, "Une bulle pour dire merci", { category: "effervescent", occasion: "Merci" }),
-        idea(ICONS.star, `Les coups de cœur de ${c.merchant_first_name} ce mois-ci`, { favorites_only: true }),
+        ...c.copy.ideas.map((i) => idea(ICONS[i.icon], i.label, i.query)),
+        idea(ICONS.star, `Les coups de cœur ${ofName(c.merchant_first_name)} ce mois-ci`, { favorites_only: true }),
       ),
       h("div", { class: "note" }, icon(ICONS.pin), `Retrait en boutique, ${c.address}. Rien à payer en ligne.`),
     ];
@@ -438,6 +440,7 @@ export class GiftAdvisor extends HTMLElement {
   // Écran 3 : les recommandations.
   private renderResults(): Node[] {
     const r = this.results!;
+    const { lighter_label, category_chip } = this.config!.copy;
     const n = r.products.length;
     const intro =
       n === 0
@@ -460,7 +463,7 @@ export class GiftAdvisor extends HTMLElement {
         "div",
         { class: "chips" },
         widenLabel && h("button", { class: "chip", onclick: () => this.search(r.widen ?? {}) }, widenLabel),
-        toggleChip("Plus léger", Boolean(this.query.lighter), { lighter: !this.query.lighter }),
+        lighter_label && toggleChip(lighter_label, Boolean(this.query.lighter), { lighter: !this.query.lighter }),
         h(
           "button",
           {
@@ -472,19 +475,23 @@ export class GiftAdvisor extends HTMLElement {
           },
           "Un autre budget",
         ),
-        toggleChip("En coffret", this.query.category === "coffret", {
-          category: this.query.category === "coffret" ? undefined : "coffret",
-        }),
+        category_chip &&
+          toggleChip(category_chip.label, this.query.category === category_chip.category, {
+            category: this.query.category === category_chip.category ? undefined : category_chip.category,
+          }),
       ),
     ].filter(Boolean) as Node[];
   }
 
-  private renderThumb(p: { color?: string }, small = false) {
-    return h("div", { class: "thumb" }, icon(p.color === "coffret" ? ICONS.gift : small ? ICONS.bottle.replace('width="26" height="60"', 'width="22" height="52"') : ICONS.bottle));
+  private renderThumb(p: { category?: string }, small = false) {
+    const { icons, default_icon } = this.config!.copy;
+    const name: IconName = (p.category && icons[p.category]) || default_icon;
+    const markup = name === "bottle" && small ? ICONS.bottle.replace('width="26" height="60"', 'width="22" height="52"') : ICONS[name];
+    return h("div", { class: "thumb" }, icon(markup));
   }
 
   private renderCard(p: Recommendation): Node {
-    const meta = [p.appellation, p.grapes.length ? capitalizeList(p.grapes) : null].filter(Boolean).join(" · ");
+    const meta = [p.origin, p.details.length ? capitalize(p.details.join(", ")) : null].filter(Boolean).join(" · ");
     return h(
       "article",
       { class: "card" },
@@ -492,7 +499,7 @@ export class GiftAdvisor extends HTMLElement {
       h(
         "div",
         { class: "card-main" },
-        h("div", { class: "row" }, h("h3", { class: "name" }, p.name), h("div", { class: "price" }, `${p.price} €`)),
+        h("div", { class: "row" }, h("h3", { class: "name" }, p.name), h("div", { class: "price" }, formatPrice(p.price))),
         h("div", { class: "meta" }, meta),
         p.merchant_note && h("div", { class: "quote" }, `« ${p.merchant_note} »`),
         h(
@@ -543,8 +550,8 @@ export class GiftAdvisor extends HTMLElement {
         h(
           "div",
           { class: "card-main" },
-          h("div", { class: "row" }, h("div", { class: "name" }, p.name), h("div", { class: "price" }, `${p.price} €`)),
-          h("div", { class: "meta" }, p.appellation),
+          h("div", { class: "row" }, h("div", { class: "name" }, p.name), h("div", { class: "price" }, formatPrice(p.price))),
+          h("div", { class: "meta" }, p.origin),
         ),
       ),
       field("first_name", "Votre prénom", { type: "text", autocomplete: "given-name", maxlength: "40" }),
@@ -601,7 +608,7 @@ export class GiftAdvisor extends HTMLElement {
   private renderConfirm(): Node[] {
     const r = this.reservation!;
     const p = this.selected;
-    const unit = p?.color === "coffret" ? "1 coffret" : "1 bouteille";
+    const unit = p?.unit ? `1 ${p.unit}` : "1 article";
     const fact = (label: string, value: string) => h("div", {}, h("dt", {}, label), h("dd", {}, value));
     return [
       h(
@@ -624,7 +631,7 @@ export class GiftAdvisor extends HTMLElement {
             h("div", { class: "name" }, r.product.name),
             h("div", { class: "meta" }, r.gift_wrap ? `${unit} · emballage cadeau offert` : unit),
           ),
-          h("div", { class: "price" }, `${r.product.price} €`),
+          h("div", { class: "price" }, formatPrice(r.product.price)),
         ),
         h("div", { class: "sep" }),
         h(

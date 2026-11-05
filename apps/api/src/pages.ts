@@ -1,14 +1,14 @@
-import { BRAND, type Shop } from "@app/shared";
+import { BRAND, formatPrice, type Shop, type VerticalId } from "@app/shared";
 import type { Reservation } from "./store.ts";
 
 export function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
-const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
+export const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">`;
 
-function layout(title: string, body: string, extraHead = ""): string {
+export function layout(title: string, body: string, extraHead = ""): string {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -38,23 +38,52 @@ export function hostedPage(shop: Shop): string {
   );
 }
 
-/** Faux site de caviste pour la démo publique, avec la bulle du widget. */
+// Contenu du faux site de commerçant, par métier.
+const DEMO_SITES: Record<VerticalId, { subtitle: string; nav: string[]; kicker: string; title: string; text: string; cta: string }> = {
+  caviste: {
+    subtitle: "vins de vignerons",
+    nav: ["Nos vins", "Champagnes", "Spiritueux", "Dégustations", "Nous trouver"],
+    kicker: "Caviste indépendant depuis 2009",
+    title: "Des vins de vignerons, choisis bouteille par bouteille.",
+    text: "Plus de 400 références en boutique, {address}. Retrait sur place, conseils à toute heure.",
+    cta: "Voir la sélection de Noël",
+  },
+  epicerie: {
+    subtitle: "épicerie fine",
+    nav: ["Sucré", "Salé", "Thés et cafés", "Coffrets", "Nous trouver"],
+    kicker: "Épicerie fine depuis 2014",
+    title: "Des produits de petits producteurs, goûtés un par un.",
+    text: "Plus de 600 références en boutique, {address}. Coffrets composés sur place, retrait au comptoir.",
+    cta: "Voir les coffrets de Noël",
+  },
+  librairie: {
+    subtitle: "librairie indépendante",
+    nav: ["Romans", "Polars", "BD", "Jeunesse", "Beaux livres", "Nous trouver"],
+    kicker: "Librairie indépendante depuis 1998",
+    title: "Des livres lus et choisis par toute l'équipe.",
+    text: "Plus de 15 000 livres en rayon, {address}. Commandes et retrait en boutique.",
+    cta: "Voir nos coups de cœur de Noël",
+  },
+};
+
+/** Faux site de commerçant pour la démo publique, avec la bulle du widget. */
 export function demoSite(shop: Shop): string {
+  const site = DEMO_SITES[shop.vertical] ?? DEMO_SITES.caviste;
   const tile = `<div class="tile"></div>`;
   return layout(
-    `${shop.name} — vins de vignerons`,
-    `<div class="demo-note">Site de démonstration : la cave et ses vins sont fictifs. Ouvrez le conseiller en bas à droite.</div>
+    `${shop.name} — ${site.subtitle}`,
+    `<div class="demo-note">Site de démonstration : la boutique et ses produits sont fictifs. Ouvrez le conseiller en bas à droite.</div>
 <header>
   <div class="logo">${esc(shop.name)}</div>
-  <nav><a href="#">Nos vins</a><a href="#">Champagnes</a><a href="#">Spiritueux</a><a href="#">Dégustations</a><a href="#">Nous trouver</a></nav>
+  <nav>${site.nav.map((n) => `<a href="#">${esc(n)}</a>`).join("")}</nav>
 </header>
 <main>
   <section class="hero">
     <div class="copy">
-      <div class="kicker">Caviste indépendant depuis 2009</div>
-      <h1>Des vins de vignerons, choisis bouteille par bouteille.</h1>
-      <p>Plus de 400 références en boutique, ${esc(shop.address)}. Retrait sur place, conseils à toute heure.</p>
-      <div class="ctas"><a class="btn dark" href="#">Voir la sélection de Noël</a><a class="btn" href="#">Horaires et accès</a></div>
+      <div class="kicker">${esc(site.kicker)}</div>
+      <h1>${esc(site.title)}</h1>
+      <p>${esc(site.text).replace("{address}", esc(shop.address))}</p>
+      <div class="ctas"><a class="btn dark" href="#">${esc(site.cta)}</a><a class="btn" href="#">Horaires et accès</a></div>
     </div>
     <div class="photo">[PHOTO DE LA BOUTIQUE]</div>
   </section>
@@ -70,7 +99,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:24px;pa
 nav{display:flex;gap:32px;font-size:15px;flex-wrap:wrap}nav a{text-decoration:none}
 .hero{display:flex;gap:48px;padding:56px 64px 40px}
 .copy{flex:1;display:flex;flex-direction:column;gap:20px;max-width:560px}
-.kicker{font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8E2C3A}
+.kicker{font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:${esc(shop.accent_secondary)}}
 h1{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:56px;line-height:1.02;letter-spacing:-1.5px}
 .copy p{margin:0;font-size:18px;line-height:1.55;color:#5C5852}
 .ctas{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
@@ -99,9 +128,9 @@ const STATUS_TEXT: Record<Reservation["status"], string> = {
 export function cancelPage(shop: Shop, r: Reservation, actionUrl: string, justCancelled = false): string {
   const canCancel = r.status === "confirmed" || r.status === "ready";
   const body = justCancelled
-    ? `<h1>C'est annulé.</h1><p>${esc(shop.merchant_first_name)} remet la bouteille en rayon. À bientôt !</p>`
+    ? `<h1>C'est annulé.</h1><p>${esc(shop.merchant_first_name)} remet « ${esc(r.product_name)} » en rayon. À bientôt !</p>`
     : `<h1>Votre mise de côté ${esc(r.code)}</h1>
-<p><strong>${esc(r.product_name)}</strong> — ${r.product_price} €<br>Statut : ${STATUS_TEXT[r.status]}</p>
+<p><strong>${esc(r.product_name)}</strong> — ${formatPrice(r.product_price)}<br>Statut : ${STATUS_TEXT[r.status]}</p>
 ${
   canCancel
     ? `<form method="post" action="${esc(actionUrl)}"><button type="submit">Annuler la mise de côté</button></form>

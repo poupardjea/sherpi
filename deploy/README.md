@@ -96,7 +96,7 @@ docker compose logs -f app    # migrations appliquées, « API prête »
 curl https://<domaine>/health # {"ok":true}
 ```
 
-Au premier démarrage, les migrations créent les tables. Avec `SEED_DEMO=1`, la cave de démo est chargée.
+Au premier démarrage, les migrations créent les tables. Avec `SEED_DEMO=1`, les 3 boutiques de démo sont chargées.
 
 **6. Sauvegardes**
 
@@ -154,6 +154,6 @@ docker system prune -f                           # libère l'espace des ancienne
 
 - **Une seule instance de l'appli :** la limite de débit est gardée en mémoire. Cette taille suffit pour quelques centaines de boutiques.
 - **E-mail au commerçant pas encore branché** (tâche 12) : il est seulement écrit dans les journaux.
-- **`SEED_DEMO=1` remet la cave de démo dans son état initial à chaque démarrage.** À ne pas utiliser pour une vraie boutique qui porterait le même identifiant.
+- **`SEED_DEMO=1` remet les boutiques de démo dans leur état initial à chaque démarrage.** À ne pas utiliser pour une vraie boutique qui porterait le même identifiant.
 - **Le texte de la demande du client part chez Anthropic, aux États-Unis.** Le prénom et le téléphone n'y vont jamais. À mentionner dans la politique de confidentialité.
 - **Le Dockerfile et `compose.yml` n'ont pas encore été testés sur une vraie machine.** Le premier démarrage sur le serveur sert de test.

@@ -1,4 +1,4 @@
-// npm run db:seed -w apps/api — applique les migrations puis charge la cave de démo.
+// npm run db:seed -w apps/api — applique les migrations puis charge les boutiques de démo.
 import { createPgDb, migrate } from "./db.ts";
 import { PgStore } from "./pg-store.ts";
 import { seedDemo } from "./seed.ts";
@@ -13,7 +13,7 @@ try {
   const applied = await migrate(db);
   console.log(applied.length ? `Migrations appliquées : ${applied.join(", ")}` : "Schéma à jour");
   await seedDemo(new PgStore(db));
-  console.log("Cave de démo chargée");
+  console.log("Boutiques de démo chargées");
 } finally {
   await db.close();
 }

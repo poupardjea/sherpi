@@ -1,5 +1,6 @@
 import { budgetRange, priceRangeFromText, type PriceRange } from "./budget.ts";
 import type { Product, RecommendInput } from "./types.ts";
+import { VERTICALS, type VerticalId } from "./verticals.ts";
 
 export const RESULT_COUNT = 3;
 
@@ -37,10 +38,13 @@ export function filterCandidates(products: Product[], input: RecommendInput): Pr
     (p) =>
       isSellable(p) &&
       (!range || (p.price >= range.min && p.price <= range.max)) &&
-      (!input.category || p.color === input.category) &&
+      (!input.category || p.category === input.category) &&
       (!input.favorites_only || p.favorite),
   );
 }
+
+// Mots de 2 lettres qui ont du sens (les autres : « de », « un »… sont ignorés).
+const SHORT_WORDS = new Set(["bd"]);
 
 export function normalize(text: string): string[] {
   return text
@@ -48,24 +52,11 @@ export function normalize(text: string): string[] {
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .split(/[^a-z0-9]+/)
-    .filter((w) => w.length > 2)
+    .filter((w) => w.length > 2 || SHORT_WORDS.has(w))
     .map((w) => (w.length > 4 && /[sx]$/.test(w) ? w.slice(0, -1) : w));
 }
 
-// Mots du client qui ne figurent pas tels quels dans la fiche produit.
-// Les valeurs passent par normalize() : écrire des mots simples, sans tiret.
-const SYNONYMS: Record<string, string[]> = {
-  bulle: ["effervescent"],
-  petillant: ["effervescent"],
-  champagne: ["effervescent"],
-  fete: ["festif", "effervescent"],
-  sud: ["languedoc", "roussillon", "rhone", "provence", "sudouest"],
-  loire: ["anjou", "loire"],
-  coffret: ["coffret"],
-  doux: ["moelleux", "doux"],
-  leger: ["leger", "frais"],
-};
-
+// Régions viticoles déduites de l'appellation (sans effet pour les autres métiers).
 const REGIONS: [RegExp, string[]][] = [
   [/pic saint-loup|faugeres/i, ["languedoc"]],
   [/roussillon/i, ["roussillon"]],
@@ -77,24 +68,24 @@ const REGIONS: [RegExp, string[]][] = [
 ];
 
 function productKeywords(p: Product): Set<string> {
-  const appellation = p.appellation.normalize("NFD").replace(/[̀-ͯ]/g, "");
-  const words = normalize([p.color, ...p.grapes, ...p.style, ...p.pairings, p.appellation].join(" "));
-  for (const [re, tags] of REGIONS) if (re.test(appellation)) words.push(...tags);
+  const origin = p.origin.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const words = normalize([p.category, ...p.details, ...p.tags, ...p.pairings, p.origin].join(" "));
+  for (const [re, tags] of REGIONS) if (re.test(origin)) words.push(...tags);
   return new Set(words);
 }
-
-const LIGHT = new Set(normalize("léger frais souple fruité"));
-const HEAVY = new Set(normalize("puissant tannique"));
 
 /**
  * Classement simple, sans modèle : correspondance de mots-clés, coups de cœur,
  * occasion. Sert de repli si l'appel au modèle échoue, et à compléter une réponse
  * du modèle qui contiendrait des ids invalides.
  */
-export function rankCandidates(candidates: Product[], input: RecommendInput): Product[] {
+export function rankCandidates(candidates: Product[], input: RecommendInput, vertical: VerticalId = "caviste"): Product[] {
+  const { synonyms, lighter, occasions } = VERTICALS[vertical].ranking;
+  const up = new Set(normalize(lighter.up));
+  const down = new Set(normalize(lighter.down));
   const wanted = normalize([input.text, input.recipient].filter(Boolean).join(" ")).flatMap((w) => [
     w,
-    ...(SYNONYMS[w] ?? []).flatMap(normalize),
+    ...(synonyms[w] ?? []).flatMap(normalize),
   ]);
   const occasion = normalize(input.occasion ?? "");
 
@@ -103,14 +94,12 @@ export function rankCandidates(candidates: Product[], input: RecommendInput): Pr
     let s = p.favorite ? 2 : 0;
     for (const w of new Set(wanted)) if (kw.has(w)) s += 3;
     if (input.lighter) {
-      for (const st of normalize(p.style.join(" "))) {
-        if (LIGHT.has(st)) s += 3;
-        if (HEAVY.has(st)) s -= 3;
+      for (const t of normalize(p.tags.join(" "))) {
+        if (up.has(t)) s += 3;
+        if (down.has(t)) s -= 3;
       }
     }
-    if (occasion.includes("merci") && p.color === "effervescent") s += 2;
-    if (occasion.includes("noel") && p.color === "coffret") s += 1;
-    if (occasion.includes("diner") && (p.color === "rouge" || p.color === "blanc")) s += 1;
+    for (const o of occasions) if (occasion.includes(o.word) && o.categories.includes(p.category)) s += o.bonus;
     return s;
   };
 

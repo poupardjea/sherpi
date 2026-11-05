@@ -6,9 +6,9 @@ import type { NewReservation, Reservation, SearchLog, Store } from "./store.ts";
 const RETENTION_DAYS = 30;
 
 // numeric → float8 et date → text : mêmes types JS avec pg et PGlite.
-const SHOP_COLUMNS = `slug, name, merchant_first_name, address, opening_hours, opening, tone,
+const SHOP_COLUMNS = `slug, name, vertical, merchant_first_name, address, opening_hours, opening, tone,
   accent_primary, accent_secondary, pickup_prefix, merchant_email, sells_alcohol, ai_monthly_quota`;
-const PRODUCT_COLUMNS = `p.id, p.name, p.appellation, p.color, p.grapes, p.style, p.price::float8 AS price,
+const PRODUCT_COLUMNS = `p.id, p.name, p.origin, p.category, p.details, p.tags, p.unit, p.price::float8 AS price,
   p.stock, p.available, p.favorite, p.pairings, p.merchant_note`;
 const RESERVATION_COLUMNS = `r.id, s.slug AS shop_slug, r.code, r.cancel_token, r.status, r.product_id,
   r.product_name, r.product_price::float8 AS product_price, r.first_name, r.phone,
@@ -118,8 +118,8 @@ export class PgStore implements Store {
   /** Crée ou met à jour une boutique (le compteur de réservations est conservé). */
   async upsertShop(shop: Shop) {
     await this.db.query(
-      `INSERT INTO shops (${SHOP_COLUMNS}) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, merchant_first_name = EXCLUDED.merchant_first_name,
+      `INSERT INTO shops (${SHOP_COLUMNS}) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14)
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, vertical = EXCLUDED.vertical, merchant_first_name = EXCLUDED.merchant_first_name,
          address = EXCLUDED.address, opening_hours = EXCLUDED.opening_hours, opening = EXCLUDED.opening,
          tone = EXCLUDED.tone, accent_primary = EXCLUDED.accent_primary, accent_secondary = EXCLUDED.accent_secondary,
          pickup_prefix = EXCLUDED.pickup_prefix, merchant_email = EXCLUDED.merchant_email,
@@ -127,6 +127,7 @@ export class PgStore implements Store {
       [
         shop.slug,
         shop.name,
+        shop.vertical,
         shop.merchant_first_name,
         shop.address,
         shop.opening_hours,
@@ -146,11 +147,12 @@ export class PgStore implements Store {
   async upsertProducts(shopSlug: string, products: Product[]) {
     for (const [position, p] of products.entries()) {
       await this.db.query(
-        `INSERT INTO products (shop_id, id, name, appellation, color, grapes, style, price, stock,
+        `INSERT INTO products (shop_id, id, name, origin, category, details, tags, unit, price, stock,
            available, favorite, pairings, merchant_note, position)
-         SELECT s.id, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14 FROM shops s WHERE s.slug = $1
-         ON CONFLICT (shop_id, id) DO UPDATE SET name = EXCLUDED.name, appellation = EXCLUDED.appellation,
-           color = EXCLUDED.color, grapes = EXCLUDED.grapes, style = EXCLUDED.style, price = EXCLUDED.price,
+         SELECT s.id, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15 FROM shops s WHERE s.slug = $1
+         ON CONFLICT (shop_id, id) DO UPDATE SET name = EXCLUDED.name, origin = EXCLUDED.origin,
+           category = EXCLUDED.category, details = EXCLUDED.details, tags = EXCLUDED.tags, unit = EXCLUDED.unit,
+           price = EXCLUDED.price,
            stock = EXCLUDED.stock, available = EXCLUDED.available, favorite = EXCLUDED.favorite,
            pairings = EXCLUDED.pairings, merchant_note = EXCLUDED.merchant_note, position = EXCLUDED.position,
            updated_at = now()`,
@@ -158,10 +160,11 @@ export class PgStore implements Store {
           shopSlug,
           p.id,
           p.name,
-          p.appellation,
-          p.color,
-          p.grapes,
-          p.style,
+          p.origin,
+          p.category,
+          p.details,
+          p.tags,
+          p.unit,
           p.price,
           p.stock,
           p.available,

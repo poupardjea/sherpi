@@ -4,7 +4,7 @@ import { createApp, purgeNow, type Notifier } from "./app.ts";
 import { createClaudePicker, hasAnthropicCredentials } from "./claude.ts";
 import { createPgDb, migrate } from "./db.ts";
 import { PgStore } from "./pg-store.ts";
-import { createDemoStore, seedDemo } from "./seed.ts";
+import { DEMOS, createDemoStore, seedDemo } from "./seed.ts";
 import type { Store } from "./store.ts";
 
 // DATABASE_URL absent : données en mémoire (dev), perdues au redémarrage.
@@ -18,7 +18,7 @@ async function createStore(): Promise<Store> {
   const applied = await migrate(db);
   if (applied.length) console.log(`[db] migrations appliquées : ${applied.join(", ")}`);
   const store = new PgStore(db);
-  // Démo publique : la cave de Marthe est remise dans l'état du catalogue à chaque démarrage.
+  // Démo publique : les boutiques de démo sont remises dans l'état des catalogues à chaque démarrage.
   if (process.env.SEED_DEMO === "1") await seedDemo(store);
   return store;
 }
@@ -42,6 +42,7 @@ const app = createApp({
   notify,
   widgetPath: fileURLToPath(new URL("../../widget/dist/w.js", import.meta.url)),
   publicUrl: process.env.PUBLIC_URL,
+  demoSlugs: DEMOS.map((d) => d.shop.slug),
 });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -50,5 +51,5 @@ void purgeNow(store);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, () => {
-  console.log(`API prête : http://localhost:${port}  (démo : /demo/cave-de-marthe, page QR : /cave-de-marthe)`);
+  console.log(`API prête : http://localhost:${port}  (accueil et démos : /, page QR : /cave-de-marthe)`);
 });

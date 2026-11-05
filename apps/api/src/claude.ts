@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { RESULT_COUNT, type Product, type RecommendInput, type Shop } from "@app/shared";
+import { RESULT_COUNT, verticalOf, type Product, type RecommendInput, type Shop } from "@app/shared";
 import { z } from "zod";
 
 /** Renvoie des ids proposés par le modèle (non validés : c'est le rôle de finalizePicks). */
@@ -23,12 +23,12 @@ function buildUserMessage(shop: Shop, candidates: Product[], input: RecommendInp
   const selection = candidates.map((p) => ({
     id: p.id,
     nom: p.name,
-    appellation: p.appellation,
-    categorie: p.color,
-    cepages: p.grapes,
-    style: p.style,
+    origine: p.origin,
+    categorie: p.category,
+    details: p.details,
+    style: p.tags,
     prix: p.price,
-    accords: p.pairings,
+    accords_ou_publics: p.pairings,
     favorite: p.favorite,
     mot_du_commercant: p.merchant_note,
   }));
@@ -39,7 +39,7 @@ function buildUserMessage(shop: Shop, candidates: Product[], input: RecommendInp
     precision: input.text ?? null,
   };
   return [
-    `Commerce : ${shop.name}`,
+    `Commerce : ${shop.name} (${verticalOf(shop.vertical).label.toLowerCase()})`,
     `<selection>\n${JSON.stringify(selection)}\n</selection>`,
     `<demande_client>\n${JSON.stringify(demande)}\n</demande_client>`,
   ].join("\n\n");
